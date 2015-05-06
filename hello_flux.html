@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Hello Flux</title>
+    <script src="https://fb.me/react-0.13.2.js"></script>
+    <script src="https://fb.me/JSXTransformer-0.13.2.js"></script>
+
+		<style>
+		.light {
+			display: inline-block;
+			height: 50px;
+			width: 50px;
+			background-color: #ffc;
+		}
+
+		.light-up {
+			background-color: red;
+		}
+
+		</style>
+  </head>
+  <body>
+		<p>To wrap my head around Flux (and practice some ES6), I'm creating a very basic Flux application.</p>
+		<p>Rather than use Facebook's own dispatcher, I've tried to understand the essence of the architecture and created my own, even more naive implementation. It <em>doesn't</em> have <code>waitFor</code>, and <em>doesn't</em> use promises. </p>
+		<p>I started with a pair of React views/components which draw a series of boxes and highlighted one at a time, in order, in reponse to a "ticker". The idea of the basic Flux app was to allow starting and stopping the sequence, and if I get bold and have time, to allow changing the order.</p>
+		<p>The motivation for learning Flux this way was that the Facebook documentation uses a load of extra cruft that hides some of the essence of the architecture. Browserify is great, the coding patterns they've used are exciting and their overall approach is sound, but I felt it got in the way of learning the core ideas. I wanted to see if I had understood it properly.</p>
+
+    <div id="bar"></div>
+
+    <script type="text/jsx;harmony=true">
+
+    const TICK = 'TICK';
+    const START = 'START';
+
+    //
+    // Dispatcher
+    //
+    class Dispatcher {
+    	var callbacks = [];
+
+    	register ( cb ) {
+    		callbacks.push( cb );
+    	}
+
+    	dispatch ( msg ) {
+    		callbacks.each cb => { cb( msg ); }
+    	}
+
+    	// action helper
+    	send ( type, data ) {
+    		this.dispatch( {type: type, data: data} );
+    	}
+    }
+
+    var dispatchio = new Dispatcher();
+
+
+
+    //
+    // Store
+    //
+
+    class Sequence {
+    	constructor ( dispatcher ) {
+    		dispatcher.register( this.delegater );
+    	}
+
+    	delegater ( message ) {
+    		switch ( message.type ) {
+    			case START:
+    				console.log( 'delegate START' );
+    				break;
+  				case TICK:
+    				console.log( 'delegate TICK' );
+  					break;
+    		}
+    	}
+    }
+
+    var seq = new Sequence( dispatchio );
+
+
+
+    //
+    // Components
+    //
+
+    var LightBar = React.createClass({
+    	getInitialState: function getInitialLightBarState () {
+    		return { current: 0 };
+    	},
+
+    	bump: function () {
+    		var newCurrent =  (this.state.current + 1) % 4;
+    		console.log( newCurrent );
+    		this.setState( {current: newCurrent} );
+    	},
+
+		  componentDidMount: function () {
+		    setInterval(this.bump, this.props.interval);
+		  },
+
+    	render: function renderLightBar () {
+    		var current = this.state.current;
+    		var lights = [0, 1, 2, 3].map( index => <Light lit={ index === current } /> );
+    		return <span>{lights}</span>;
+    	}
+    });
+
+    var Light = React.createClass({
+    	render: function renderLight () {
+    		var lightUp = this.props.lit? ' light-up': '';
+    		return <span className={'light' + lightUp} />
+    	}
+    });
+
+		// Go!
+		React.render( <LightBar interval={750} />, document.getElementById( 'bar' ) );
+
+
+
+    </script>
+  </body>
+</html>
