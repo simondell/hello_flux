@@ -35,12 +35,13 @@
     		this.callbacks = [];
     	}
 
-    	register ( cb ) {
-    		this.callbacks.push( cb );
+    	register ( source, cb ) {
+    		console.log( arguments );
+    		this.callbacks.push( cb.bind( source ) );
     	}
 
     	dispatch ( msg ) {
-    		this.callbacks.each( cb => { cb( msg ); } );
+    		this.callbacks.forEach( cb => { cb( msg ); } );
     	}
 
     	// action helper
@@ -49,8 +50,6 @@
     	}
     }
 
-    var dispatchio = new Dispatcher();
-
 
 
     //
@@ -58,22 +57,31 @@
     //
     class Sequence {
     	constructor ( dispatcher ) {
-    		dispatcher.register( this.delegater );
+    		this.current = 0;
+
+    		dispatcher.register( this, this.delegater );
     	}
 
     	delegater ( message ) {
     		switch ( message.type ) {
     			case START:
-    				console.log( 'delegate START' );
+    				this.start();
     				break;
   				case TICK:
-    				console.log( 'delegate TICK' );
+    				this.tick();
   					break;
     		}
     	}
-    }
 
-    var seq = new Sequence( dispatchio );
+    	tick () {
+    		this.current = (this.current + 1) % 4;
+				console.log( `TICK ${this.current}` );
+    	}
+
+    	start () {
+				console.log( 'START' );
+    	}
+    }
 
 
 
@@ -92,7 +100,7 @@
     	},
 
 		  componentDidMount: function () {
-		    setInterval(this.bump, this.props.interval);
+		    // setInterval(this.bump, this.props.interval);
 		  },
 
     	render: function renderLightBar () {
@@ -105,11 +113,16 @@
     var Light = React.createClass({
     	render: function renderLight () {
     		var lightUp = this.props.lit? ' light-up': '';
-    		return <span className={'light' + lightUp} />
+    		return <span className={`light ${lightUp}`} />
     	}
     });
 
 		// Go!
+    var dispatchio = new Dispatcher();
+    var seq = new Sequence( dispatchio );
+
+		dispatchio.send( TICK, {} );
+
 		React.render( <LightBar interval={750} />, document.getElementById( 'bar' ) );
 
 
