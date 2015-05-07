@@ -1,11 +1,15 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <title>Hello Flux</title>
-    <script src="https://fb.me/react-0.13.2.js"></script>
-    <script src="https://fb.me/JSXTransformer-0.13.2.js"></script>
+	<head>
+		<title>Hello Flux</title>
+		<script src="https://fb.me/react-0.13.2.js"></script>
+		<script src="https://fb.me/JSXTransformer-0.13.2.js"></script>
 
 		<style>
+		#lightbar {
+
+		}
+
 		.light {
 			display: inline-block;
 			height: 50px;
@@ -18,115 +22,140 @@
 		}
 
 		</style>
-  </head>
-  <body>
-    <div id="bar"></div>
+	</head>
+	<body>
+		<div role="application"></div>
 
-    <script type="text/jsx;harmony=true">
+		<script type="text/jsx;harmony=true">
 
-    const TICK = 'TICK';
-    const START = 'START';
-
-    //
-    // Dispatcher
-    //
-    class Dispatcher {
-    	constructor () {
-    		this.callbacks = [];
-    	}
-
-    	register ( source, cb ) {
-    		console.log( arguments );
-    		this.callbacks.push( cb.bind( source ) );
-    	}
-
-    	dispatch ( msg ) {
-    		this.callbacks.forEach( cb => { cb( msg ); } );
-    	}
-
-    	// action helper
-    	send ( type, data ) {
-    		this.dispatch( {type: type, data: data} );
-    	}
-    }
+		const TICK = 'TICK';
+		const START = 'START';
 
 
+		//
+		// messenger
+		//
+		class Messenger {
+			constructor () {
+				this.callbacks = [];
+			}
 
-    //
-    // Store
-    //
-    class Sequence {
-    	constructor ( dispatcher ) {
-    		this.current = 0;
+			register ( source, cb ) {
+				console.log( 'register', this );
+				console.log( arguments );
+				this.callbacks.push( cb.bind( source ) );
+			}
 
-    		dispatcher.register( this, this.delegater );
-    	}
+			dispatch ( msg ) {
+				this.callbacks.forEach( cb => { cb( msg ); } );
+			}
+		}
 
-    	delegater ( message ) {
-    		switch ( message.type ) {
-    			case START:
-    				this.start();
-    				break;
-  				case TICK:
-    				this.tick();
-  					break;
-    		}
-    	}
 
-    	tick () {
-    		this.current = (this.current + 1) % 4;
+		//
+		// Dispatcher
+		//
+		class Dispatcher extends Messenger {
+			constructor () {
+				super();
+			}
+
+			// action helper
+			send ( type, data ) {
+				this.dispatch( {type: type, data: data} );
+			}
+		}
+
+
+
+		//
+		// Store
+		//
+		class Sequence extends Messenger {
+			constructor ( dispatcher ) {
+				super();
+				this.current = 0;
+				this.tickTime = 750;
+
+				dispatcher.register( this, this.delegatah );
+			}
+
+			delegatah ( message ) {
+				switch ( message.type ) {
+					case START:
+						this.start();
+						break;
+					case TICK:
+						this.tick();
+						break;
+				}
+			}
+
+			tick () {
+				this.current = (this.current + 1) % 4;
+				this.dispatch({current: this.current});
 				console.log( `TICK ${this.current}` );
-    	}
+			}
 
-    	start () {
+			start () {
 				console.log( 'START' );
-    	}
-    }
+				this.timer = setInterval( this.tick.bind(this), this.tickTime );
+			}
+
+			stop () {
+				clearInterval( this.timer );
+			}
+		}
 
 
 
-    //
-    // Components
-    //
-    var LightBar = React.createClass({
-    	getInitialState: function getInitialLightBarState () {
-    		return { current: 0 };
-    	},
+		//
+		// Components
+		//
+		var App = React.createClass({
+			render: function AppRender () {
+				return
+			}
+		});
 
-    	bump: function () {
-    		var newCurrent =  (this.state.current + 1) % 4;
-    		console.log( newCurrent );
-    		this.setState( {current: newCurrent} );
-    	},
 
-		  componentDidMount: function () {
-		    // setInterval(this.bump, this.props.interval);
-		  },
+		var LightBar = React.createClass({
+			getInitialState: function getInitialLightBarState () {
+				return { current: 0 };
+			},
 
-    	render: function renderLightBar () {
-    		var current = this.state.current;
-    		var lights = [0, 1, 2, 3].map( index => <Light lit={ index === current } /> );
-    		return <span>{lights}</span>;
-    	}
-    });
+			seqChanged: function ( changedData ) {
+				this.setState( changedData );
+			},
 
-    var Light = React.createClass({
-    	render: function renderLight () {
-    		var lightUp = this.props.lit? ' light-up': '';
-    		return <span className={`light ${lightUp}`} />
-    	}
-    });
+			componentDidMount: function () {
+				seq.register( this, this.seqChanged );
+			},
+
+			render: function renderLightBar () {
+				var current = this.state.current;
+				var lights = [0, 1, 2, 3].map( index => <Light lit={ index === current } /> );
+				return <div id="lightbar">{lights}</div>;
+			}
+		});
+
+		var Light = React.createClass({
+			render: function renderLight () {
+				var lightUp = this.props.lit? ' light-up': '';
+				return <span className={`light ${lightUp}`} />
+			}
+		});
 
 		// Go!
-    var dispatchio = new Dispatcher();
-    var seq = new Sequence( dispatchio );
+		var dispatchio = new Dispatcher();
+		var seq = new Sequence( dispatchio );
 
-		dispatchio.send( TICK, {} );
+		dispatchio.send( START, {} );
 
-		React.render( <LightBar interval={750} />, document.getElementById( 'bar' ) );
+		React.render( <LightBar />, document.querySelector( '[role="application"]' ) );
 
 
 
-    </script>
-  </body>
+		</script>
+	</body>
 </html>
