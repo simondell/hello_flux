@@ -6,6 +6,35 @@
 		<script src="https://fb.me/JSXTransformer-0.13.2.js"></script>
 
 		<style>
+		#controls {
+			float: left;
+			width: 50px;
+			height: 50px;
+		}
+
+			#controls button {
+				box-sizing: border-box;
+				float: left;
+				clear: left;
+				height: 25px;
+				width: 100%;
+				line-height: 25px;
+				text-align: center;
+				border: 1px solid black;
+				outline: 0;
+				background-color: white;
+				color: #333;
+				cursor: pointer;
+			}
+
+			#controls button:active {
+				background-color: orange;
+			}
+
+			#controls button + button {
+				border-top: 0;
+			}
+
 		#lightbar {
 
 		}
@@ -30,6 +59,7 @@
 
 		const TICK = 'TICK';
 		const START = 'START';
+		const STOP = 'STOP';
 
 
 		//
@@ -62,7 +92,7 @@
 
 			// action helper
 			send ( type, data ) {
-				this.dispatch( {type: type, data: data} );
+				this.dispatch( {type: type} );
 			}
 		}
 
@@ -82,27 +112,25 @@
 
 			delegatah ( message ) {
 				switch ( message.type ) {
-					case START:
-						this.start();
-						break;
-					case TICK:
-						this.tick();
-						break;
+					case START: this.start(); break;
+					case STOP: this.stop(); break;
+					case TICK: this.tick(); break;
 				}
 			}
 
 			tick () {
 				this.current = (this.current + 1) % 4;
 				this.dispatch({current: this.current});
-				console.log( `TICK ${this.current}` );
+				// console.log( `TICK ${this.current}` );
 			}
 
 			start () {
-				console.log( 'START' );
 				this.timer = setInterval( this.tick.bind(this), this.tickTime );
+				console.log( 'START', this.timer );
 			}
 
 			stop () {
+				console.log( 'STOP', this.timer );
 				clearInterval( this.timer );
 			}
 		}
@@ -112,13 +140,35 @@
 		//
 		// Components
 		//
+
+		// App component
 		var App = React.createClass({
 			render: function AppRender () {
-				return
+				return <div id="outer"><Controls /><LightBar /></div>;
 			}
 		});
 
 
+		// Controls
+		var Controls = React.createClass({
+			sendStart: function sendStart () {
+				dispatchio.send( START );
+			},
+
+			sendStop: function sendStart () {
+				dispatchio.send( STOP );
+			},
+
+			render: function controlsRender () {
+				return	<div id="controls">
+									<button type="button" onClick={this.sendStart}>start</button>
+									<button type="button" onClick={this.sendStop}>stop</button>
+								</div>
+			}
+		});
+
+
+		// lights
 		var LightBar = React.createClass({
 			getInitialState: function getInitialLightBarState () {
 				return { current: 0 };
@@ -150,9 +200,7 @@
 		var dispatchio = new Dispatcher();
 		var seq = new Sequence( dispatchio );
 
-		dispatchio.send( START, {} );
-
-		React.render( <LightBar />, document.querySelector( '[role="application"]' ) );
+		React.render( <App />, document.querySelector( '[role="application"]' ) );
 
 
 
