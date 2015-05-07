@@ -31,14 +31,16 @@
     // Dispatcher
     //
     class Dispatcher {
-    	var callbacks = [];
+    	constructor () {
+    		this.callbacks = [];
+    	}
 
     	register ( cb ) {
-    		callbacks.push( cb );
+    		this.callbacks.push( cb );
     	}
 
     	dispatch ( msg ) {
-    		callbacks.each cb => { cb( msg ); }
+    		this.callbacks.each( cb => { cb( msg ); } );
     	}
 
     	// action helper
@@ -54,7 +56,6 @@
     //
     // Store
     //
-
     class Sequence {
     	constructor ( dispatcher ) {
     		dispatcher.register( this.delegater );
@@ -79,7 +80,6 @@
     //
     // Components
     //
-
     var LightBar = React.createClass({
     	getInitialState: function getInitialLightBarState () {
     		return { current: 0 };
