@@ -126,11 +126,9 @@
 
 			start () {
 				this.timer = setInterval( this.tick.bind(this), this.tickTime );
-				console.log( 'START', this.timer );
 			}
 
 			stop () {
-				console.log( 'STOP', this.timer );
 				clearInterval( this.timer );
 			}
 		}
